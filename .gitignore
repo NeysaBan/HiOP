@@ -1,1 +1,3 @@
 .vscode
+exec.sh
+__pycache__
