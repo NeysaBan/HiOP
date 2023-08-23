@@ -1,4 +1,4 @@
-#include "config.h"
+#include "cuda_config.h"
 
 __device__ void warp_sharedMem(volatile T *smem, int tid){
     T tmp = smem[tid];

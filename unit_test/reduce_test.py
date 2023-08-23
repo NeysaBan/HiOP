@@ -1,18 +1,15 @@
-from typing import Any
+import yaml
 import torch
-import argparse
+import pytest
 import numpy as np
 from rectime import show_time
 from torch.autograd import Function
 from torch.utils.cpp_extension import load
 
-parser = argparse.ArgumentParser(description='special config')
-parser.add_argument('--device', dest='device', type=str, default="1", required = False, help='idx of cuda')
-parser.add_argument('--ntest', dest='ntest', type=int, default=10, required = False, help='iter of test')
-parser.add_argument('--blockSize', dest='blockSize', type=int, default=256, required = False, help='thread num in a block')
-args = parser.parse_args()
 
-args.device = 'cuda:' + args.device
+with open("unit_test/pyconfig.yaml", 'r', encoding='utf-8') as f:
+    config = yaml.safe_load(f)
+device = 'cuda:' + str(config['device_id'])
 
 cuda_module = load(name="reduce_arr",
                         extra_include_paths=["include"],
@@ -20,10 +17,9 @@ cuda_module = load(name="reduce_arr",
                         verbose=True)
 
 N = 100000
-# input = torch.randint(low=0, high=10, size=(1, N), dytype=torch.int32, device=args.device)
-input = torch.rand(size=(1, N), dtype=torch.float32).to(args.device)
-output = torch.empty(1).to(args.device)
-doutput = torch.empty(1).to(args.device)
+input = torch.rand(size=(1, N), dtype=torch.float32).to(device)
+output = torch.empty(1).to(device)
+doutput = torch.empty(1).to(device)
 
 # class cudaReduce(Function):
 #     @staticmethod
@@ -45,9 +41,12 @@ def cuda_go():
 def torch_go():
     output = torch.sum(input)
 
-show_time(cuda_go, cuda=True, device=args.device, ntest=args.ntest)
-
-show_time(torch_go, cuda=False, device=args.device, ntest=args.ntest)
-
-torch.allclose(output, doutput)
-print("Kernel test passed.")
+class Test_reduce:
+    def test_torch(self):
+        show_time(torch_go, cuda=False, device=device, ntest=config['ntest'])
+    def test_cuda(self):
+        show_time(cuda_go, cuda=True, device=device, ntest=config['ntest'])
+        assert torch.allclose(output, doutput)
+    
+if __name__ == '__main__':
+    pytest.main(['-v', '-s'])

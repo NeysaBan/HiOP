@@ -9,7 +9,6 @@ def show_time(func, cuda = True, device = "cuda:1", ntest = 10):
     else:
         name  = "Torch"
 
-    print("== {} ==".format(name))
     times = list()
     res = list()
     # GPU warm up
