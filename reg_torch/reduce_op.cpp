@@ -1,20 +1,47 @@
 #include <torch/extension.h>
 #include "reduce_arr.h"
 
-void torch_launch_reduce(torch::Tensor &output,
+#include <iostream>
+using namespace std;
+
+#define CHECK_CUDA(x) \
+    TORCH_CHECK(x.type().is_cuda(), #x, " must be a CUDAtensor ")
+#define CHECK_CONTIGUOUS(x) \
+    TORCH_CHECK(x.is_contiguous(), #x, " must be contiguous ")
+#define CHECK_INPUT(x) \
+    CHECK_CUDA(x);       \
+    CHECK_CONTIGUOUS(x)
+
+void reduce_forward(torch::Tensor &output,
                         const torch::Tensor &input,
                         int64_t N){ // HACK
-    launch_reduce((float *)output.data_ptr(), (const float *)input.data_ptr(), N);
+    CHECK_INPUT(input);
+    launch_reduce_forward((float *)output.data_ptr(), 
+                            (const float *)input.data_ptr(), 
+                            N);
+    // return ret;
+}
+
+void reduce_backward(torch::Tensor &grad_output,
+                        int64_t N){
+    launch_reduce_backward((float *)grad_output.data_ptr(), N);
 }
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m){
     m.def(
-        "torch_launch_reduce",
-        &torch_launch_reduce,
-        " add reduce kernel function"
+        "reduce_forward",
+        &reduce_forward,
+        " add reduce forward kernel function"
     );
+    m.def(
+        "reduce_backward",
+        &reduce_backward,
+        " add reduce backward kernel function"
+    );
+
 }
 
 TORCH_LIBRARY(reduce_arr, m) { // HACK 
-    m.def("torch_launch_reduce", torch_launch_reduce);
+    m.def("reduce_forward", reduce_forward);
+    m.def("reduce_backward", reduce_backward);
 }

@@ -10,7 +10,7 @@ def show_time(func, cuda = True, device = "cuda:1", ntest = 10):
         name  = "Torch"
 
     times = list()
-    res = list()
+    res = None
     # GPU warm up
     for _ in range(ntest):
         func()
@@ -18,12 +18,13 @@ def show_time(func, cuda = True, device = "cuda:1", ntest = 10):
         # sync the threads to get accurate cuda running time
         torch.cuda.synchronize(device)
         start_time = time.time()
-        r = func()
+        res = func()
         torch.cuda.synchronize(device)
         end_time = time.time()
-
         times.append((end_time-start_time)*1e6)
-        res.append(r)
+
     print("{} time:  {:.3f}us".format(name, np.mean(times)))
+    
+    return res
 
 

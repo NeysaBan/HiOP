@@ -1,4 +1,6 @@
 #include "cuda_config.h"
+#include <iostream>
+using namespace std;
 
 __device__ void warp_sharedMem(volatile T *smem, int tid){
     T tmp = smem[tid];
@@ -39,9 +41,9 @@ __device__ void warp_sharedMem(volatile T *smem, int tid){
 }
 
 
-__global__ void reduce_kernel(T *output, const T *input, int N){
+__global__ void reduce_forward_kernel(T *output, const T *input, int N){
     // 一个block可以负责2xthread_num(block)的数据
-    int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    int tid = threadIdx.x;
     int startIdx = blockIdx.x * (2 * blockDim.x) + threadIdx.x;
 
     __shared__ T smem[blockSize];
@@ -64,9 +66,31 @@ __global__ void reduce_kernel(T *output, const T *input, int N){
         output[blockIdx.x] = smem[0];
 }
 
+void launch_reduce_forward(T *output, const T *input, int N){
+    int gridSize = (N + blockSize - 1) / blockSize;
+    dim3 grid(gridSize), block(blockSize);
+    reduce_forward_kernel<<<grid, block>>>(output, input, N);
+    cudaError_t err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        printf("CUDA Error: %s\n", cudaGetErrorString(err));
+    // Possibly: exit(-1) if program cannot continue....
+    } 
+    cudaDeviceSynchronize();
+    // cout<<"forward: "<<*(output)<<endl; // BUG 这里越界访问可能是因为,output是在显存上的,所以在内存上读不到
+}
 
-void launch_reduce(T *output, const T *input, int N){
+__global__ void reduce_backward_kernel(T *grad_output, int N){
+    int tid = blockDim.x * blockIdx.x + threadIdx.x;
+    int total_threads_num = blockDim.x * gridDim.x;
+
+    for(int i = tid ; i < N ; i += total_threads_num){
+        if(i < N)
+            grad_output[i] = 1.0;
+    }
+}
+
+void launch_reduce_backward(T *grad_output, int N){
     int gridSize = (blockSize + N - 1) / blockSize;
     dim3 grid(gridSize), block(blockSize);
-    reduce_kernel<<<grid, block>>>(output, input, N);
+    reduce_backward_kernel<<<grid, block>>>(grad_output, N);
 }
