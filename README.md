@@ -3,9 +3,13 @@
 ## 🥹 Environments
 
 NVIDIA Driver: 535.86.10
+
 CUDA (runtime): 12.2
+
 CUDA (Pytorch Toolkit): 11.0
+
 Python: 3.8.5
+
 PyTorch: 1.7.1+cu110
 
 ## 🫵🏼 Structure
