@@ -3,12 +3,7 @@ import time
 import numpy as np
 
 def show_time(func, cuda = True, device = "cuda:1", ntest = 10):
-    name = None
-    if cuda:
-        name = "Cuda"
-    else:
-        name  = "Torch"
-
+    print()
     times = list()
     res = None
     # GPU warm up
@@ -23,7 +18,7 @@ def show_time(func, cuda = True, device = "cuda:1", ntest = 10):
         end_time = time.time()
         times.append((end_time-start_time)*1e6)
 
-    print("{} time:  {:.3f}us".format(name, np.mean(times)))
+    print("time cost:  {:.3f}us".format(np.mean(times)))
     
     return res
 

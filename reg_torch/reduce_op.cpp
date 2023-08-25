@@ -14,12 +14,11 @@ using namespace std;
 
 void reduce_forward(torch::Tensor &output,
                         const torch::Tensor &input,
-                        int64_t N){ // HACK
+                        int64_t N){
     CHECK_INPUT(input);
     launch_reduce_forward((float *)output.data_ptr(), 
                             (const float *)input.data_ptr(), 
                             N);
-    // return ret;
 }
 
 void reduce_backward(torch::Tensor &grad_output,
@@ -41,7 +40,7 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m){
 
 }
 
-TORCH_LIBRARY(reduce_arr, m) { // HACK 
+TORCH_LIBRARY(reduce_arr, m) {
     m.def("reduce_forward", reduce_forward);
     m.def("reduce_backward", reduce_backward);
 }

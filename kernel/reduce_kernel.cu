@@ -75,7 +75,6 @@ void launch_reduce_forward(T *output, const T *input, int N){
         printf("CUDA Error: %s\n", cudaGetErrorString(err));
     // Possibly: exit(-1) if program cannot continue....
     } 
-    cudaDeviceSynchronize();
     // cout<<"forward: "<<*(output)<<endl; // BUG 这里越界访问可能是因为,output是在显存上的,所以在内存上读不到
 }
 
