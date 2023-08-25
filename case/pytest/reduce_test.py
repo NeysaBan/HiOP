@@ -41,7 +41,7 @@ def torch_go():
     return output
     
 def cuda_go():
-    cuda_module.reduce_forward(doutput, input, N)
+    cuda_module.reduce_forward(doutput, input, N, gridSize)
     return doutput
 
 class Test_reduce:

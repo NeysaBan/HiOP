@@ -14,16 +14,16 @@ using namespace std;
 
 void reduce_forward(torch::Tensor &output,
                         const torch::Tensor &input,
-                        int64_t N){
+                        int64_t N, int64_t gridSize){
     CHECK_INPUT(input);
     launch_reduce_forward((float *)output.data_ptr(), 
                             (const float *)input.data_ptr(), 
-                            N);
+                            N, gridSize);
 }
 
 void reduce_backward(torch::Tensor &grad_output,
-                        int64_t N){
-    launch_reduce_backward((float *)grad_output.data_ptr(), N);
+                        int64_t N, int64_t gridSize){
+    launch_reduce_backward((float *)grad_output.data_ptr(), N, gridSize);
 }
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m){

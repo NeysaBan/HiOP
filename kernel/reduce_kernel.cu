@@ -41,7 +41,7 @@ __device__ void warp_sharedMem(volatile T *smem, int tid){
 }
 
 
-__global__ void reduce_forward_kernel(T *output, const T *input, int N){
+__global__ void reduce_forward_kernel(T *output, const T *input, int N, int gridSize){
     // 一个block可以负责2xthread_num(block)的数据
     int tid = threadIdx.x;
     int startIdx = blockIdx.x * (2 * blockDim.x) + threadIdx.x;
@@ -66,10 +66,9 @@ __global__ void reduce_forward_kernel(T *output, const T *input, int N){
         output[blockIdx.x] = smem[0];
 }
 
-void launch_reduce_forward(T *output, const T *input, int N){
-    int gridSize = (N + blockSize - 1) / blockSize;
+void launch_reduce_forward(T *output, const T *input, int N, int gridSize){
     dim3 grid(gridSize), block(blockSize);
-    reduce_forward_kernel<<<grid, block>>>(output, input, N);
+    reduce_forward_kernel<<<grid, block>>>(output, input, N, gridSize);
     cudaError_t err = cudaGetLastError();
     if (err != cudaSuccess) {
         printf("CUDA Error: %s\n", cudaGetErrorString(err));
@@ -78,7 +77,7 @@ void launch_reduce_forward(T *output, const T *input, int N){
     // cout<<"forward: "<<*(output)<<endl; // BUG 这里越界访问可能是因为,output是在显存上的,所以在内存上读不到
 }
 
-__global__ void reduce_backward_kernel(T *grad_output, int N){
+__global__ void reduce_backward_kernel(T *grad_output, int N, int gridSize){
     int tid = blockDim.x * blockIdx.x + threadIdx.x;
     int total_threads_num = blockDim.x * gridDim.x;
 
@@ -88,8 +87,7 @@ __global__ void reduce_backward_kernel(T *grad_output, int N){
     }
 }
 
-void launch_reduce_backward(T *grad_output, int N){
-    int gridSize = (blockSize + N - 1) / blockSize;
+void launch_reduce_backward(T *grad_output, int N, int gridSize){
     dim3 grid(gridSize), block(blockSize);
-    reduce_backward_kernel<<<grid, block>>>(grad_output, N);
+    reduce_backward_kernel<<<grid, block>>>(grad_output, N, gridSize);
 }
