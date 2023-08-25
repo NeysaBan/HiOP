@@ -17,8 +17,7 @@ cuda_module = load(name="reduce_arr",
                         verbose=True)
 
 ## test data
-# N = 1024 * 1024
-N = 100
+N = 1024 * 1024
 blockSize = 256
 dataPerBlock = 2 * blockSize ## 每个block可以处理的数据
 
@@ -54,5 +53,5 @@ class Test_reduce:
         assert torch.allclose(ground_truth, cuda_res)
     
 if __name__ == '__main__':
-    pytest.main(['-v', '-s'])
+    pytest.main(['-v', '-s', "case/pytest/reduce_test.py"])
     print()

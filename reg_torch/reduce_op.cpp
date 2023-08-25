@@ -1,9 +1,6 @@
 #include <torch/extension.h>
 #include "reduce_arr.h"
 
-#include <iostream>
-using namespace std;
-
 #define CHECK_CUDA(x) \
     TORCH_CHECK(x.type().is_cuda(), #x, " must be a CUDAtensor ")
 #define CHECK_CONTIGUOUS(x) \
