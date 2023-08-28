@@ -11,11 +11,11 @@
 
 void reduce_forward(torch::Tensor &output,
                         const torch::Tensor &input,
-                        int64_t N, int64_t gridSize){
+                        int64_t N, int64_t gridSize, bool block){
     CHECK_INPUT(input);
     launch_reduce_forward((float *)output.data_ptr(), 
                             (const float *)input.data_ptr(), 
-                            N, gridSize);
+                            N, gridSize, block);
 }
 
 void reduce_backward(torch::Tensor &grad_output,

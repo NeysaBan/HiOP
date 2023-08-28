@@ -8,22 +8,29 @@ __global__ void gelu_forward_kernel(half *dst, const half *src, int N,
                                     const half *hl, const half *one, 
                                     const half *alpha, const half *beta){
 
-    __half sAlpha = __ldca(alpha), sBeta = __ldca(beta),
-        sHl = __ldca(hl), sOne = __ldca(one);
+    // __half sAlpha = __ldca(alpha), sBeta = __ldca(beta),
+    //     sHl = __ldca(hl), sOne = __ldca(one);
+    __half sAlpha = *(alpha), sBeta = *(beta),
+        sHl = *(hl), sOne = *(one);
 
     int gtid = blockIdx.x * blockDim.x + threadIdx.x;
     int dataPerIter = gridDim.x * blockDim.x;
 
     for(int i = gtid ; i < N ; i += dataPerIter){
         __half num = src[i];
-        const float tanhParam = __half2float(sAlpha * 
+        // const float tanhParam = __half2float(sAlpha * 
+        //                                         (num + sBeta * num * num * num)
+        //                                     );
+        // const float tanh_res = tanhf(tanhParam);
+        const float tanh_res = tanhf(__half2float(sAlpha * 
                                                 (num + sBeta * num * num * num)
-                                            );
-        const float tanh_res = tanhf(tanhParam);
+                                            ));
         num = sHl * num * (sOne + __float2half(tanh_res));
         __stcg(dst + i, num);
     }
 }
+
+
 
 void launch_gelu_forward(half *dst, const half *src, int N, int gridSize){
     half *dhl, *done, *dalpha, *dbeta;

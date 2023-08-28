@@ -11,9 +11,6 @@ with open("case/pytest/pyconfig.yaml", 'r', encoding='utf-8') as f:
 device = 'cuda:' + str(config['device_id'])
 
 
-extra_cflags = ['-std=c++14']
-
-
 cuda_module = load(name="gelu",
                         extra_include_paths=["include"],
                         sources=["reg_torch/gelu_op.cpp", "kernel/gelu_kernel.cu"],
@@ -21,15 +18,20 @@ cuda_module = load(name="gelu",
                         verbose=True)
 
 ## test data
-N = 1024 * 1024
-blockSize = 256
-dataPerBlock = blockSize
+N = eval(config['N'])
+smCnt = config['smCnt']
+warpSize = config['warpSize']
+blockSize = config['blockSize']
+threadPerMultip = config['threadPerMultip']
 
 src = torch.randint(low = -10, high = 10, size=(N, ), dtype=torch.float32).half().to(device)
 ddst = torch.zeros_like(src, dtype=torch.float32).half().to(device)
 ground_truth = F.gelu(src)
 
-gridSize = int((N + blockSize - 1) / blockSize)
+
+
+gridSize = min(int((N + blockSize - 1) / blockSize), 
+                int(smCnt * threadPerMultip / blockSize * warpSize))
 print("gridSize: ", gridSize)
 
 def torch_go():
@@ -49,4 +51,5 @@ class Test_gelu:
         assert torch.allclose(ground_truth, cuda_res, atol=0.001)
 
 if __name__ == '__main__':
-    pytest.main(['-v', '-s', "case/pytest/gelu_test.py"])
+    # pytest.main(['-v', '-s', "case/pytest/gelu_test.py"])
+    pytest.main(['-v', '-s'])
